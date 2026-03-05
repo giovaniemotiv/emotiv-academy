@@ -42,10 +42,16 @@ resume_command = 'pull'
 pause_threshold = 0.5
 resume_threshold = 0.5
 
+fac_pause_command = 'clench'
+fac_resume_command = 'smile'
+fac_pause_threshold = 0.7
+fac_resume_threshold = 0.7
+
 def load_config():
     global spotify_client_id, spotify_client_secret, emotiv_app_client_id, emotiv_app_client_secret
     global profile_name_load, headset_Id, enable_com, enable_fac
     global pause_command, resume_command, pause_threshold, resume_threshold
+    global fac_pause_command, fac_resume_command, fac_pause_threshold, fac_resume_threshold
     
     if os.path.exists(CONFIG_FILE):
         try:
@@ -63,8 +69,13 @@ def load_config():
             enable_fac = config.get('enable_fac', True)
             pause_command = config.get('pause_command', 'push')
             resume_command = config.get('resume_command', 'pull')
-            pause_threshold = config.get('pause_threshold', 0.7)
-            resume_threshold = config.get('resume_threshold', 0.7)
+            pause_threshold = config.get('pause_threshold', 0.5)
+            resume_threshold = config.get('resume_threshold', 0.5)
+            
+            fac_pause_command = config.get('fac_pause_command', 'clench')
+            fac_resume_command = config.get('fac_resume_command', 'smile')
+            fac_pause_threshold = config.get('fac_pause_threshold', 0.7)
+            fac_resume_threshold = config.get('fac_resume_threshold', 0.7)
         except Exception as e:
             print(f"[CONFIG WARNING] Failed to parse {CONFIG_FILE}: {e}")
 
@@ -92,6 +103,7 @@ def index():
     global spotify_client_id, spotify_client_secret
     global emotiv_app_client_id, emotiv_app_client_secret, profile_name_load, headset_Id
     global enable_com, enable_fac, pause_command, resume_command, pause_threshold, resume_threshold
+    global fac_pause_command, fac_resume_command, fac_pause_threshold, fac_resume_threshold
     
     if request.method == 'POST':
         spotify_client_id = request.form.get('spotify_client_id', '').strip()
@@ -105,8 +117,13 @@ def index():
         enable_fac = 'enable_fac' in request.form
         pause_command = request.form.get('pause_command', 'push')
         resume_command = request.form.get('resume_command', 'pull')
-        pause_threshold = float(request.form.get('pause_threshold', 0.7))
-        resume_threshold = float(request.form.get('resume_threshold', 0.7))
+        pause_threshold = float(request.form.get('pause_threshold', 0.5))
+        resume_threshold = float(request.form.get('resume_threshold', 0.5))
+        
+        fac_pause_command = request.form.get('fac_pause_command', 'clench')
+        fac_resume_command = request.form.get('fac_resume_command', 'smile')
+        fac_pause_threshold = float(request.form.get('fac_pause_threshold', 0.7))
+        fac_resume_threshold = float(request.form.get('fac_resume_threshold', 0.7))
         
         # Save credentials to config file
         config_data = {
@@ -121,7 +138,11 @@ def index():
             'pause_command': pause_command,
             'resume_command': resume_command,
             'pause_threshold': pause_threshold,
-            'resume_threshold': resume_threshold
+            'resume_threshold': resume_threshold,
+            'fac_pause_command': fac_pause_command,
+            'fac_resume_command': fac_resume_command,
+            'fac_pause_threshold': fac_pause_threshold,
+            'fac_resume_threshold': fac_resume_threshold
         }
         try:
             with open(CONFIG_FILE, 'w') as f:
@@ -138,7 +159,9 @@ def index():
         profile_name_load=profile_name_load, headset_Id=headset_Id,
         enable_com=enable_com, enable_fac=enable_fac,
         pause_command=pause_command, resume_command=resume_command,
-        pause_threshold=pause_threshold, resume_threshold=resume_threshold
+        pause_threshold=pause_threshold, resume_threshold=resume_threshold,
+        fac_pause_command=fac_pause_command, fac_resume_command=fac_resume_command,
+        fac_pause_threshold=fac_pause_threshold, fac_resume_threshold=fac_resume_threshold
     )
 
 @app.route('/login')
@@ -405,10 +428,10 @@ class Subscribe():
         time = data.get('time')
         print(f'Facial Expr Data - Eye: {eye_action}, Upper: {upper_action} ({upper_power}), Lower: {lower_action} ({lower_power}), Time: {time}')
 
-        if lower_action and lower_action.strip().lower() == 'clench' and lower_power > 0.7:
+        if lower_action and lower_action.strip().lower() == fac_pause_command and lower_power > fac_pause_threshold:
             with app.test_request_context():
                 pause()
-        elif lower_action and lower_action.strip().lower() == 'smile' and lower_power > 0.7:
+        elif lower_action and lower_action.strip().lower() == fac_resume_command and lower_power > fac_resume_threshold:
             with app.test_request_context():
                 resume()
 

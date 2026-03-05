@@ -38,10 +38,12 @@ A step-by-step tutorial video is available [here](https://www.youtube.com/watch?
     cd emotiv-academy/Spotify_BCI
     ```
 
-2. **Install dependencies:**
-    ```bash
-    pip install flask requests websocket-client python-dispatch
-    ```
+2. **Run the Launcher Script:**
+    The repository includes automated launcher scripts that will verify Python is installed, install any required dependencies, and start the application.
+    - **Mac/Linux**: Open your terminal in this directory and run `./macOS_Linux_setup_and_run.sh` (you may need to run `chmod +x macOS_Linux_setup_and_run.sh` first).
+    - **Windows**: Double-click the `windows_setup_and_run.bat` file in your File Explorer.
+
+    *Note: The script will automatically install Flask, requests, websocket-client, and python-dispatch for you.*
 
 3. **Create applications:**
     - **Spotify App**: [Create one here](https://developer.spotify.com/dashboard). **Note:** You must have a Spotify Premium account to create an app. Additionally, you must add your full name and email address in the "User Management" tab on the app dashboard. Once created, note your client ID/secret.
@@ -53,12 +55,7 @@ A step-by-step tutorial video is available [here](https://www.youtube.com/watch?
     - Log in and accept EMOTIV policies via the Launcher.
     - Train "push" and "pull" (or facial expressions) in EmotivBCI until accuracy is sufficient.
 
-5. **Run the app:**
-    ```bash
-    python spotify_bci.py
-    ```
-
-6. **Configure settings:**
+5. **Configure settings:**
     The application will automatically open `http://127.0.0.1:5000/` in your default browser roughly 1 second after starting. (If it doesn't open automatically, manually navigate to the link.)
     
     Here, you will use the visual configuration interface to set your:

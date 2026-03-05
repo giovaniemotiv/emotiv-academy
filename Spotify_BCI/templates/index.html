@@ -173,8 +173,7 @@
                 <div class="checkbox-item">
                     <input type="checkbox" id="enable_fac" name="enable_fac" value="1" {% if enable_fac %}checked{%
                         endif %}>
-                    <label for="enable_fac" style="margin-bottom: 0;">Facial Expressions <i>(Smile=Resume,
-                            Clench=Pause)</i></label>
+                    <label for="enable_fac" style="margin-bottom: 0;">Facial Expressions</label>
                 </div>
             </div>
 
@@ -210,6 +209,41 @@
                     <input type="number" id="resume_threshold" name="resume_threshold" value="{{ resume_threshold }}"
                         min="0" max="1" step="0.01">
                     <div class="help-text">Does not apply to 'neutral' action</div>
+                </div>
+            </div>
+
+            <h2>6. Facial Expressions Mapping</h2>
+            <div class="threshold-group">
+                <div class="form-group">
+                    <label for="fac_pause_command">Pause track expression</label>
+                    <select id="fac_pause_command" name="fac_pause_command">
+                        <option value="clench" {% if fac_pause_command=='clench' %}selected{% endif %}>Clench</option>
+                        <option value="smile" {% if fac_pause_command=='smile' %}selected{% endif %}>Smile</option>
+                        <option value="laugh" {% if fac_pause_command=='laugh' %}selected{% endif %}>Laugh</option>
+                        <option value="smirk" {% if fac_pause_command=='smirk' %}selected{% endif %}>Smirk</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="fac_pause_threshold">Pause threshold (0.0 to 1.0)</label>
+                    <input type="number" id="fac_pause_threshold" name="fac_pause_threshold"
+                        value="{{ fac_pause_threshold }}" min="0" max="1" step="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label for="fac_resume_command">Resume track expression</label>
+                    <select id="fac_resume_command" name="fac_resume_command">
+                        <option value="smile" {% if fac_resume_command=='smile' %}selected{% endif %}>Smile</option>
+                        <option value="clench" {% if fac_resume_command=='clench' %}selected{% endif %}>Clench</option>
+                        <option value="laugh" {% if fac_resume_command=='laugh' %}selected{% endif %}>Laugh</option>
+                        <option value="smirk" {% if fac_resume_command=='smirk' %}selected{% endif %}>Smirk</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="fac_resume_threshold">Resume threshold (0.0 to 1.0)</label>
+                    <input type="number" id="fac_resume_threshold" name="fac_resume_threshold"
+                        value="{{ fac_resume_threshold }}" min="0" max="1" step="0.01">
                 </div>
             </div>
 
