@@ -13,7 +13,9 @@ A step-by-step tutorial video is available [here](https://www.youtube.com/watch?
 
 - **Spotify Web API integration**: Play/pause music with your brain.
 - **Real-time BCI control**: Use mental commands or facial expressions for hands-free operation.
-- **Live feedback UI**: Visual debug interface shows detected commands (optional).
+- **Smart Debouncing**: Automatically prevents sending redundant back-to-back requests to the Spotify API when continuous mental commands are detected.
+- **Detailed Error Logging**: Console output for authentication failures and REST API exceptions directly in the terminal to assist with debugging.
+- **Auto-Browser Login**: Automatically opens the Spotify authentication flow in your default browser on startup.
 - **Educational Codebase**: Simple Python + Flask code, ideal for learning BCI-Web API integration.
 - **Cortex API integration**: Robust connection for EEG streaming and command detection.
 - **Customizable mapping**: Easily change which commands trigger which Spotify actions.
@@ -42,7 +44,7 @@ A step-by-step tutorial video is available [here](https://www.youtube.com/watch?
     ```
 
 3. **Create applications:**
-    - **Spotify App**: [Create one here](https://developer.spotify.com/dashboard) and note your client ID/secret.
+    - **Spotify App**: [Create one here](https://developer.spotify.com/dashboard). **Note:** You must have a Spotify Premium account to create an app. Additionally, you must add your full name and email address in the "User Management" tab on the app dashboard. Once created, note your client ID/secret.
     - **Emotiv Cortex App**: [Register here](https://account.emotiv.com/my-account/cortex-apps/).
 
 4. **Setup hardware and software:**
@@ -74,11 +76,8 @@ A step-by-step tutorial video is available [here](https://www.youtube.com/watch?
     python spotify_bci.py
     ```
 
-8. **Open in your browser and authorize:**
-    ```
-    http://127.0.0.1:5000
-    ```
-    Click **Login with Spotify** and authorize access.
+8. **Authorize Spotify:**
+    The application will automatically open `http://127.0.0.1:5000/login` in your default browser roughly 1 second after starting. If your browser does not open automatically, manually navigate to `http://127.0.0.1:5000` and click **Login with Spotify** to authorize access.
 
 ## Project Structure
 

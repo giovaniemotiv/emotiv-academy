@@ -5,6 +5,9 @@ import urllib.parse
 
 from flask import Flask, redirect, request, jsonify, session
 import sys
+import threading
+import webbrowser
+import os
 
 '''
 Pause Spotify music during "push" mental command using an Emotiv EEG headset.
@@ -41,6 +44,7 @@ AUTH_URL = 'https://accounts.spotify.com/authorize'
 TOKEN_URL = 'https://accounts.spotify.com/api/token'
 API_BASE_URL = 'https://api.spotify.com/v1/'
 loaded_profile = False
+last_spotify_action = None
 
 def check_configuration():
     missing = []
@@ -48,8 +52,8 @@ def check_configuration():
         missing.append("Spotify client ID/secret")
     if not emotiv_app_client_id or not emotiv_app_client_secret:
         missing.append("Emotiv app client ID/secret")
-    if not profile_name_load:
-        missing.append("Emotiv profile name")
+    # if not profile_name_load:
+    #     missing.append("Emotiv profile name")
     if missing:
         print("[CONFIG ERROR] Missing required configuration:", ", ".join(missing))
         sys.exit(1)
@@ -81,6 +85,7 @@ def login():
 @app.route('/callback')
 def callback():
     if 'error' in request.args:
+        print(f"[SPOTIFY ERROR] Authentication failed: {request.args['error']}")
         return jsonify({"error": request.args['error']})
 
     if 'code' in request.args:
@@ -93,34 +98,67 @@ def callback():
         }
         response = requests.post(TOKEN_URL, data=req_body)
         token_info = response.json()
+        
+        if response.status_code != 200 or 'error' in token_info:
+            print(f"[SPOTIFY ERROR] Token exchange failed ({response.status_code}): {token_info}")
+            return jsonify(token_info), response.status_code
+            
         global access_token_global
-        access_token_global = token_info['access_token']
-        run_emotiv()
+        access_token_global = token_info.get('access_token')
+        print("[SUCCESS] Spotify authenticated successfully!")
+        
+        try:
+            run_emotiv()
+        except Exception as e:
+            print(f"[EMOTIV ERROR] Failed to run Emotiv: {e}")
+            
         return redirect('/')
 
 @app.route('/pause')
 def pause():
+    global last_spotify_action
+    if last_spotify_action == 'pause':
+        print("[SKIP] Already paused, ignoring command")
+        return "Already paused"
+
     print('STARTING SPOTIFY PAUSE')
     headers = {'Authorization': f"Bearer {access_token_global}"}
     url = f"{API_BASE_URL}me/player/pause"
     response = requests.put(url, headers=headers)
-    if response.status_code == 200:
+    if response.status_code in (200, 204):
+        print("[SUCCESS] Spotify playback paused")
+        last_spotify_action = 'pause'
         return "Playback paused successfully!"
     else:
-        pause = response.json()
-        return jsonify(pause), response.status_code
+        try:
+            error_data = response.json()
+        except Exception:
+            error_data = response.text
+        print(f"[SPOTIFY ERROR] /pause failed with status {response.status_code}: {error_data}")
+        return jsonify(error_data), response.status_code
 
 @app.route('/resume')
 def resume():
+    global last_spotify_action
+    if last_spotify_action == 'resume':
+        print("[SKIP] Already playing, ignoring command")
+        return "Already playing"
+
     print('STARTING SPOTIFY RESUME')
     headers = {'Authorization': f"Bearer {access_token_global}"}
     url = f"{API_BASE_URL}me/player/play"
     response = requests.put(url, headers=headers)
-    if response.status_code == 200:
+    if response.status_code in (200, 204):
+        print("[SUCCESS] Spotify playback resumed")
+        last_spotify_action = 'resume'
         return "Playback resumed successfully!"
     else:
-        resume = response.json()
-        return jsonify(resume), response.status_code
+        try:
+            error_data = response.json()
+        except Exception:
+            error_data = response.text
+        print(f"[SPOTIFY ERROR] /resume failed with status {response.status_code}: {error_data}")
+        return jsonify(error_data), response.status_code
 
 @app.route('/devices')
 def devices():
@@ -308,5 +346,10 @@ class Subscribe():
         error_data = kwargs.get('error_data')
         print(error_data)
 
+def open_browser():
+    webbrowser.open_new("http://127.0.0.1:5000/login")
+
 if __name__ == '__main__':
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        threading.Timer(1.25, open_browser).start()
     app.run(host='127.0.0.1', debug=True)
