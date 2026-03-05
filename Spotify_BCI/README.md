@@ -53,31 +53,25 @@ A step-by-step tutorial video is available [here](https://www.youtube.com/watch?
     - Log in and accept EMOTIV policies via the Launcher.
     - Train "push" and "pull" (or facial expressions) in EmotivBCI until accuracy is sufficient.
 
-5. **Configure credentials:**
-    - Open `spotify_bci.py` and enter your Spotify and Emotiv app credentials:
-      ```python
-      spotify_client_id = 'your-spotify-client-id'
-      spotify_client_secret = 'your-spotify-client-secret'
-      emotiv_app_client_id = 'your-emotiv-client-id'
-      emotiv_app_client_secret = 'your-emotiv-client-secret'
-      profile_name_load = 'your-trained-profile-name'
-      ```
-    - *Note: Make sure this trained profile was created using the same headset you intend to connect.*
-
-6. **(Optional) Specify which headset to connect:**
-    In `spotify_bci.py`, set the headset ID if you want to target a specific device.
-    Leave it empty (`''`) to auto-connect to the first available headset.
-    ```python
-    headset_Id = ''
-    ```
-
-7. **Run the app:**
+5. **Run the app:**
     ```bash
     python spotify_bci.py
     ```
 
-8. **Authorize Spotify:**
-    The application will automatically open `http://127.0.0.1:5000/login` in your default browser roughly 1 second after starting. If your browser does not open automatically, manually navigate to `http://127.0.0.1:5000` and click **Login with Spotify** to authorize access.
+6. **Configure settings:**
+    The application will automatically open `http://127.0.0.1:5000/` in your default browser roughly 1 second after starting. (If it doesn't open automatically, manually navigate to the link.)
+    
+    Here, you will use the visual configuration interface to set your:
+    - Spotify and Emotiv App Credentials
+    - Trained Emotiv profile name (optional)
+    - Specific Headset ID (optional)
+    - Input modality toggles (Mental commands and/or Facial expressions)
+    - Mental command mapping & thresholds (e.g., mapping "push" to pause and "pull" to resume)
+    
+    *Note: Your settings will be automatically saved to a local `credentials.config` file on your machine. The next time you run `spotify_bci.py`, the form will be pre-filled with these settings. If you want to wipe or reset your saved settings, simply delete `credentials.config`.*
+
+7. **Authorize Spotify:**
+    Click **Start Application and Login to Spotify** at the bottom of the configuration page to authorize access and launch the BCI integration.
 
 ## Project Structure
 

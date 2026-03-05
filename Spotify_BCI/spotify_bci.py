@@ -8,6 +8,7 @@ import sys
 import threading
 import webbrowser
 import os
+import json
 
 '''
 Pause Spotify music during "push" mental command using an Emotiv EEG headset.
@@ -21,22 +22,53 @@ Inputs to Update:
 app = Flask(__name__)
 app.secret_key = ''
 
+CONFIG_FILE = 'credentials.config'
+
 # --- REQUIRED CONFIGURATION ---
-# ⚠️ USER MUST FILL THESE VALUES BEFORE RUNNING THE APP ⚠️
-# Spotify Credentials
+# Default Form Values (will be replaced by values in credentials.config if it exists)
 spotify_client_id = ''
 spotify_client_secret = ''
-
-# Emotiv App Credentials
 emotiv_app_client_id = ''
 emotiv_app_client_secret = ''
 
-# Emotiv Trained Profile
 profile_name_load = ''
-
-# Specify the headset ID to connect to.
-# Leave it as an empty string ('') to automatically connect to the first available headset in the list.
 headset_Id = ''
+
+# Toggles & Thresholds
+enable_com = True
+enable_fac = True
+pause_command = 'push'
+resume_command = 'pull'
+pause_threshold = 0.5
+resume_threshold = 0.5
+
+def load_config():
+    global spotify_client_id, spotify_client_secret, emotiv_app_client_id, emotiv_app_client_secret
+    global profile_name_load, headset_Id, enable_com, enable_fac
+    global pause_command, resume_command, pause_threshold, resume_threshold
+    
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                config = json.load(f)
+                
+            spotify_client_id = config.get('spotify_client_id', '')
+            spotify_client_secret = config.get('spotify_client_secret', '')
+            emotiv_app_client_id = config.get('emotiv_app_client_id', '')
+            emotiv_app_client_secret = config.get('emotiv_app_client_secret', '')
+            profile_name_load = config.get('profile_name_load', '')
+            headset_Id = config.get('headset_Id', '')
+            
+            enable_com = config.get('enable_com', True)
+            enable_fac = config.get('enable_fac', True)
+            pause_command = config.get('pause_command', 'push')
+            resume_command = config.get('resume_command', 'pull')
+            pause_threshold = config.get('pause_threshold', 0.7)
+            resume_threshold = config.get('resume_threshold', 0.7)
+        except Exception as e:
+            print(f"[CONFIG WARNING] Failed to parse {CONFIG_FILE}: {e}")
+
+load_config()
 
 # --- Runtime Setup ---
 REDIRECT_URI = 'http://127.0.0.1:5000/callback'
@@ -46,28 +78,68 @@ API_BASE_URL = 'https://api.spotify.com/v1/'
 loaded_profile = False
 last_spotify_action = None
 
-def check_configuration():
-    missing = []
-    if not spotify_client_id or not spotify_client_secret:
-        missing.append("Spotify client ID/secret")
-    if not emotiv_app_client_id or not emotiv_app_client_secret:
-        missing.append("Emotiv app client ID/secret")
-    # if not profile_name_load:
-    #     missing.append("Emotiv profile name")
-    if missing:
-        print("[CONFIG ERROR] Missing required configuration:", ", ".join(missing))
-        sys.exit(1)
-
-check_configuration()
-
 def run_emotiv():
     s = Subscribe(emotiv_app_client_id, emotiv_app_client_secret)
-    streams = ['com', 'fac']
+    streams = []
+    if enable_com:
+        streams.append('com')
+    if enable_fac:
+        streams.append('fac')
     s.start(streams, headset_Id)
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return "Welcome to Spotify BCI Control <a href='/login'>Login with Spotify</a>"
+    global spotify_client_id, spotify_client_secret
+    global emotiv_app_client_id, emotiv_app_client_secret, profile_name_load, headset_Id
+    global enable_com, enable_fac, pause_command, resume_command, pause_threshold, resume_threshold
+    
+    if request.method == 'POST':
+        spotify_client_id = request.form.get('spotify_client_id', '').strip()
+        spotify_client_secret = request.form.get('spotify_client_secret', '').strip()
+        emotiv_app_client_id = request.form.get('emotiv_app_client_id', '').strip()
+        emotiv_app_client_secret = request.form.get('emotiv_app_client_secret', '').strip()
+        profile_name_load = request.form.get('profile_name_load', '').strip()
+        headset_Id = request.form.get('headset_Id', '').strip()
+        
+        enable_com = 'enable_com' in request.form
+        enable_fac = 'enable_fac' in request.form
+        pause_command = request.form.get('pause_command', 'push')
+        resume_command = request.form.get('resume_command', 'pull')
+        pause_threshold = float(request.form.get('pause_threshold', 0.7))
+        resume_threshold = float(request.form.get('resume_threshold', 0.7))
+        
+        # Save credentials to config file
+        config_data = {
+            'spotify_client_id': spotify_client_id,
+            'spotify_client_secret': spotify_client_secret,
+            'emotiv_app_client_id': emotiv_app_client_id,
+            'emotiv_app_client_secret': emotiv_app_client_secret,
+            'profile_name_load': profile_name_load,
+            'headset_Id': headset_Id,
+            'enable_com': enable_com,
+            'enable_fac': enable_fac,
+            'pause_command': pause_command,
+            'resume_command': resume_command,
+            'pause_threshold': pause_threshold,
+            'resume_threshold': resume_threshold
+        }
+        try:
+            with open(CONFIG_FILE, 'w') as f:
+                json.dump(config_data, f, indent=4)
+        except Exception as e:
+            print(f"[CONFIG ERROR] Failed to save {CONFIG_FILE}: {e}")
+            
+        return redirect('/login')
+
+    from flask import render_template
+    return render_template('index.html', 
+        spotify_client_id=spotify_client_id, spotify_client_secret=spotify_client_secret,
+        emotiv_app_client_id=emotiv_app_client_id, emotiv_app_client_secret=emotiv_app_client_secret,
+        profile_name_load=profile_name_load, headset_Id=headset_Id,
+        enable_com=enable_com, enable_fac=enable_fac,
+        pause_command=pause_command, resume_command=resume_command,
+        pause_threshold=pause_threshold, resume_threshold=resume_threshold
+    )
 
 @app.route('/login')
 def login():
@@ -306,18 +378,20 @@ class Subscribe():
             self.c.setup_profile(profile_name_load, status_load)
             loaded_profile = True
 
-        self.c.set_mental_command_active_action(['push', 'pull'])
+        active_actions = [cmd for cmd in (pause_command, resume_command) if cmd != 'neutral']
+        if active_actions:
+            self.c.set_mental_command_active_action(list(set(active_actions)))
+            
         data = kwargs.get('data')
         action = data.get('action')
         power = data.get('power')
         time = data.get('time')
         print(f'Command Data - Action: {action}, Power: {power}, Time: {time}')
-        # The threshold value (0.7) represents the minimum power level required to activate the "push" or "pull" mental commands.
-        # Adjust this value if necessary to fine-tune the sensitivity of the mental command detection.
-        if action == 'push' and power > 0.7:
+        
+        if action == pause_command and (action == 'neutral' or power > pause_threshold):
             with app.test_request_context():
                 pause()
-        elif action == 'pull' and power > 0.7:
+        elif action == resume_command and (action == 'neutral' or power > resume_threshold):
             with app.test_request_context():
                 resume()
 
@@ -347,7 +421,7 @@ class Subscribe():
         print(error_data)
 
 def open_browser():
-    webbrowser.open_new("http://127.0.0.1:5000/login")
+    webbrowser.open_new("http://127.0.0.1:5000/")
 
 if __name__ == '__main__':
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
